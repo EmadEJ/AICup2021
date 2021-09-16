@@ -156,7 +156,7 @@ int main(){
         for(int i=0;i<n;i++){
             int x,y,val;
             cin>>x>>y>>val;
-            see.push_back({x,y})
+            see.push_back({x,y});
             mp.update(x,y,val);
         }
         mp.clean();
