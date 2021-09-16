@@ -9,11 +9,13 @@ int vision,bombDelay,maxBombRange,zoneStart,zoneDelay,maxStep;
 // situation
 int step;
 bool enemySeen;
-vector <pair <int,int> > see;
+// list of tiles that are currently in our vision in format of {x,y}
+vector <pair <int,int> > sight;
 
 struct Map{
     int height,width;
     int stt[N][N],boom[N][N];
+    bool insight[N][N];
     int dis[N*N][N*N],nxt[N*N][N*N];
     void init(){
         for(int i=0;i<N;i++) fill(stt[i],stt[i]+N,(1<<9));
@@ -21,7 +23,7 @@ struct Map{
         for(int i=0;i<N*N;i++) fill(dis[i],dis[i]+N*N,INF);
     }
     void update(int x,int y,int val){
-        if((stt[x][y]>>4)%2==0 && (val>>4)%2==1){
+        if((stt[x][y]>>4)%2==0 && (val>>4)%2==1 && insight[x][y]){
             boom[x][y]=step+bombDelay;
         }
         if((val>>4)%2==0){
@@ -58,6 +60,9 @@ struct Map{
     }
     bool isdark(int x,int y){
         return (stt[x][y]>>9)%2;
+    }
+    bool isvisible(int x,int y){
+        return insight[x][y];
     }
     bool isfree(int ind){
         return !(isbox(ind/width,ind%width) || iswall(ind/width,ind%width));
@@ -152,11 +157,11 @@ int main(){
         if(enemySeen) cin>>enemy.x>>enemy.y>>enemy.hp;
         int n;
         cin>>n;
-        see.clear();
+        sight.clear();
         for(int i=0;i<n;i++){
             int x,y,val;
             cin>>x>>y>>val;
-            see.push_back({x,y});
+            sight.push_back({x,y});
             mp.update(x,y,val);
         }
         mp.clean();
