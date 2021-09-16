@@ -10,6 +10,7 @@ int vision,bombDelay,maxBombRange,zoneStart,zoneDelay,maxStep;
 // situation
 int step;
 bool enemySeen;
+vector <pair <int,int> > see;
 
 struct Map{
     int height,width;
@@ -63,6 +64,7 @@ struct Map{
         return !(isbox(ind/width,ind%width) || iswall(ind/width,ind%width));
     }
     void clean(){
+        for(int i=0;i<N*N;i++) fill(dis[i],dis[i]+N*N,INF);
         for(int i=0;i<height;i++){
             for(int j=0;j<width;j++){
                 int ind=i*width+j;
@@ -87,10 +89,12 @@ struct Map{
             }
         }
     }
+    // the minimum distance between (x1,y1) and (x2,y2)
     int distance(int x1,int y1,int x2,int y2){
         int ind1=x1*width+y1,ind2=x2*width+y2;
         return dis[ind1][ind2];
     }
+    // getting the first move from (x1,y1) to (x2,y2)
     int nxtmove(int x1,int y1,int x2,int y2){
         int ind1=x1*width+y1,ind2=x2*width+y2;
         return nxt[ind1][ind2];
@@ -101,21 +105,40 @@ struct Player{
     int x,y,hp,bombRange,trapCount,hpupcnt;
 } me,enemy;
 
+// wich step will the zone hit this tile
 int safety(int x,int y){
     return zoneStart+min(min(x+1,mp.height-x),min(y+1,mp.width-y))*zoneDelay;
 }
 
-/*
-bomb dodging
+// handling when we meet enemy in the middle
+int mantoman(){
+    
+}
 
-path finding
+// when we're side by side with enemy
+int punching(){
+    
+}
 
-man to man
+// checking if the next move is dangerous (will go into bomb) and if yes doing something safe
+int bombcheck(){
+    
+}
 
-punching
+// finding the best bomb to place to collect the most boxes
+int mining(){
+    
+}
 
-escaping??(not necessary)
-*/
+// checking whether we should move to centre and finding the best way to do so
+int centralizing(){
+    
+}
+
+// evaluating the phase we are in and what functions to use (this should be completed last)
+int evaluate(){
+    
+}
 
 int main(){
     srand(time(0));
@@ -130,19 +153,17 @@ int main(){
         if(enemySeen) cin>>enemy.x>>enemy.y>>enemy.hp;
         int n;
         cin>>n;
+        see.clear();
         for(int i=0;i<n;i++){
             int x,y,val;
             cin>>x>>y>>val;
+            see.push_back({x,y})
             mp.update(x,y,val);
         }
         mp.clean();
         string eom;
         cin>>eom;
-
-        ///phase recognising
-
-        ///desicion making
-        cout<<rand()%10<<endl;
+        cout<<evaluate()<<endl;
     }
     return 0;
 }
