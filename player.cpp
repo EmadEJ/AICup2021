@@ -17,20 +17,25 @@ struct Map{
     int stt[N][N],boom[N][N];
     bool insight[N][N];
     int dis[N*N][N*N],nxt[N*N][N*N];
+    // initialization
     void init(){
         for(int i=0;i<N;i++) fill(stt[i],stt[i]+N,(1<<9));
         for(int i=0;i<N;i++) fill(boom[i],boom[i]+N,INF);
         for(int i=0;i<N*N;i++) fill(dis[i],dis[i]+N*N,INF);
     }
+    // updating the state of a tile
     void update(int x,int y,int val){
-        if((stt[x][y]>>4)%2==0 && (val>>4)%2==1 && insight[x][y]){
-            boom[x][y]=step+bombDelay;
+        if((stt[x][y]>>4)%2==0 && (val>>4)%2==1){
+            if(insight[x][y]) boom[x][y]=step+bombDelay;
+            else boom[x][y]=-1;
         }
         if((val>>4)%2==0){
             boom[x][y]=INF;
         }
+        insight[x][y]=1;
         stt[x][y]=val;
     }
+    // checking the state
     bool iszone(int x,int y){
         return (stt[x][y])%2;
     }
@@ -61,12 +66,14 @@ struct Map{
     bool isdark(int x,int y){
         return (stt[x][y]>>9)%2;
     }
+    // is currently in sight
     bool isvisible(int x,int y){
         return insight[x][y];
     }
     bool isfree(int ind){
         return !(isbox(ind/width,ind%width) || iswall(ind/width,ind%width));
     }
+    // refreshes the distances and paths after the new information
     void clean(){
         for(int i=0;i<N*N;i++) fill(dis[i],dis[i]+N*N,INF);
         for(int i=0;i<height;i++){
@@ -145,7 +152,6 @@ int evaluate(){
 }
 
 int main(){
-    srand(time(0));
     string init;
     cin>>init>>mp.height>>mp.width>>me.x>>me.y>>me.hp>>me.bombRange>>me.trapCount>>vision>>bombDelay>>maxBombRange>>zoneStart>>zoneDelay>>maxStep;
     cout<<"init confirm"<<endl;
@@ -158,6 +164,7 @@ int main(){
         int n;
         cin>>n;
         sight.clear();
+        for(int i=0;i<N;i++) fill(mp.insight[i],mp.insight[i]+N,0);
         for(int i=0;i<n;i++){
             int x,y,val;
             cin>>x>>y>>val;
