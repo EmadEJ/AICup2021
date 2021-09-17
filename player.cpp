@@ -126,9 +126,18 @@ int mantoman(){
     
 }
 
-// when we're side by side with enemy
+// when we're side by side with enemy retruns the right move
 int punching(){
-    
+    if(me.hp>=enemy.hp){
+        if(me.x==enemy.x && me.y==enemy.y+1) return 6;
+        if(me.x==enemy.x && me.y==enemy.y-1) return 7;
+        if(me.y==enemy.y && me.x==enemy.x+1) return 8;
+        if(me.y==enemy.y && me.x==enemy.x-1) return 9;
+    }
+    // if it's not a good decision to punch and we should escape it returns -1
+    else{
+        return -1;
+    }
 }
 
 // checking if the next move is dangerous (will go into bomb) and if yes doing something safe
