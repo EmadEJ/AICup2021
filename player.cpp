@@ -145,7 +145,33 @@ int punching(){
 }
 
 // checking if the next move is dangerous (will go into bomb) and if yes doing something safe
-int bombcheck(){
+int bombcheck(int x, int y){
+    // returning TRUE if tile can go boom! FALSE if safe
+    bool isDangerous = false, lelf_has_wall = false, right_has_wall = false, up_has_wall = false,down_has_wall = false;
+    int bmbRange = maxBombRange; // can be changed by strategy
+    for (int i=1; i <= bmbRange; i++){
+
+        // down wing
+        if(mp.isinside(x+i, y)){
+        if((mp.stt[x+i][y]>>3)%2==1 && !down_has_wall) down_has_wall = true; //if there is a wall in this wings don's check behind of it
+        if((mp.stt[x+i][y]>>4)%2==1 && !down_has_wall) return true;}
+        
+        // up wing
+        if(mp.isinside(x-i, y)){
+        if((mp.stt[x-i][y]>>3)%2==1 && !down_has_wall) down_has_wall = true;
+        if((mp.stt[x-i][y]>>4)%2==1 && !down_has_wall) return true;}
+        
+        // right wing
+        if(mp.isinside(x, y+i)){
+        if((mp.stt[x][y+i]>>3)%2==1 && !down_has_wall) down_has_wall = true;
+        if((mp.stt[x][y+i]>>4)%2==1 && !down_has_wall) return true;}
+        
+        // left wing
+        if(mp.isinside(x, y-i)){
+        if((mp.stt[x][y-i]>>3)%2==1 && !down_has_wall) down_has_wall = true;
+        if((mp.stt[x][y-i]>>4)%2==1 && !down_has_wall) return true;}
+    }
+    return isDangerous;
     
 }
 
