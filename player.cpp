@@ -70,6 +70,10 @@ struct Map{
     bool isvisible(int x,int y){
         return insight[x][y];
     }
+    // is inside the boundries of the map
+    bool isinside(int x,int y){
+        return (x>=0 && x<height && y>=0 && y<width);
+    }
     bool isfree(int ind){
         return !(isbox(ind/width,ind%width) || iswall(ind/width,ind%width));
     }
