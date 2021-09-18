@@ -34,6 +34,7 @@ struct Map{
         }
         insight[x][y]=1;
         stt[x][y]=val;
+        stt[height-x-1][width-y-1]=val&13;
     }
     // checking the state
     bool iszone(int x,int y){
@@ -110,7 +111,7 @@ struct Map{
         return dis[ind1][ind2];
     }
     // getting the first move from (x1,y1) to (x2,y2)
-    int nxtmove(int x1,int y1,int x2,int y2){
+    int nextmove(int x1,int y1,int x2,int y2){
         int ind1=x1*width+y1,ind2=x2*width+y2;
         return nxt[ind1][ind2];
     }
@@ -127,11 +128,11 @@ int safety(int x,int y){
 
 // handling when we meet enemy in the middle
 int mantoman(){
-    
+
 }
 
 // when we're side by side with enemy retruns the right move
-int punching(){
+int knife(){
     if(me.hp>=enemy.hp){
         if(me.x==enemy.x && me.y==enemy.y+1) return 6;
         if(me.x==enemy.x && me.y==enemy.y-1) return 7;
@@ -139,9 +140,7 @@ int punching(){
         if(me.y==enemy.y && me.x==enemy.x-1) return 9;
     }
     // if it's not a good decision to punch and we should escape it returns -1
-    else{
-        return -1;
-    }
+    return -1;
 }
 
 // checking if the next move is dangerous (will go into bomb) and if yes doing something safe
@@ -155,39 +154,52 @@ int bombcheck(int x, int y){
         if(mp.isinside(x+i, y)){
         if((mp.iswall(x+i,y) || mp.isbox(x+i,y)) && !down_has_wall) down_has_wall = true; //if there is a wall in this wings dont's check behind of it
         if((mp.boom[x+i][y]==-1 || mp.boom[x+i][y]==step) && !down_has_wall) return true;}
-        
+
         // up wing
         if(mp.isinside(x-i, y)){
         if((mp.iswall(x-i,y) || mp.isbox(x-i,y)) && !down_has_wall) down_has_wall = true;
         if((mp.boom[x-i][y]==-1 || mp.boom[x-i][y]==step) && !down_has_wall) return true;}
-        
+
         // right wing
         if(mp.isinside(x, y+i)){
         if((mp.iswall(x,y+i) || mp.isbox(x,y+i)) && !down_has_wall) down_has_wall = true;
         if((mp.boom[x][y+i]==-1 || mp.boom[x][y+i]==step) && !down_has_wall) return true;}
-        
+
         // left wing
         if(mp.isinside(x, y-i)){
         if((mp.iswall(x,y-i) || mp.isbox(x,y-i)) && !down_has_wall) down_has_wall = true;
         if((mp.boom[x][y-i]==-1 || mp.boom[x][y-i]==step) && !down_has_wall) return true;}
     }
     return false;
-    
+
 }
 
 // finding the best bomb to place to collect the most boxes
-int mining(){
-    
+int mine(){
+
 }
 
 // checking whether we should move to centre and finding the best way to do so
-int centralizing(){
-    
+int centralize(){
+    int dis=INF,safe=0;
+    pair <int,int> best;
+    for(int i=0;i<mp.height;i++){
+        for(int j=0;j<mp.width;j++){
+            if(!mp.isdark(i,j)){
+                if((safety(i,j)>safe && mp.distance(me.x,me.y,i,j)!=INF) || (safety(i,j)==safe && mp.distance(me.x,me.y,i,j)<dis)){
+                    dis=mp.distance(me.x,me.y,i,j);
+                    best={i,j};
+                    safe=safety(i,j);
+                }
+            }
+        }
+    }
+    return mp.nextmove(me.x,me.y,best.first,best.second);
 }
 
 // evaluating the phase we are in and what functions to use (this should be completed last)
 int evaluate(){
-    
+    return centralize();
 }
 
 int main(){
@@ -196,7 +208,7 @@ int main(){
     cout<<"init confirm"<<endl;
     mp.init();
     while(true){
-        int step,last;
+        int last;
         cin>>step>>last>>me.x>>me.y>>me.hp>>me.hpupcnt>>me.bombRange>>me.trapCount;
         cin>>enemySeen;
         if(enemySeen) cin>>enemy.x>>enemy.y>>enemy.hp;
@@ -213,7 +225,8 @@ int main(){
         mp.clean();
         string eom;
         cin>>eom;
-        cout<<evaluate()<<endl;
+        int res=evaluate();
+        cout<<res<<endl;
     }
     return 0;
 }
