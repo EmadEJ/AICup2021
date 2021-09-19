@@ -149,26 +149,26 @@ int bombcheck(int x, int y){
     bool  lelf_has_wall = false, right_has_wall = false, up_has_wall = false,down_has_wall = false;
     int bmbRange = maxBombRange; // can be changed by strategy
     for (int i=1; i <= bmbRange; i++){
-
         // down wing
         if(mp.isinside(x+i, y)){
-        if((mp.iswall(x+i,y) || mp.isbox(x+i,y)) && !down_has_wall) down_has_wall = true; //if there is a wall in this wings dont's check behind of it
-        if((mp.boom[x+i][y]==-1 || mp.boom[x+i][y]==step) && !down_has_wall) return true;}
-
+            if((mp.iswall(x+i,y) || mp.isbox(x+i,y)) && !down_has_wall) down_has_wall = true; //if there is a wall in this wings dont's check behind of it
+            if((mp.boom[x+i][y]==-1 || mp.boom[x+i][y]==step) && !down_has_wall) return true;
+        }
         // up wing
         if(mp.isinside(x-i, y)){
-        if((mp.iswall(x-i,y) || mp.isbox(x-i,y)) && !down_has_wall) down_has_wall = true;
-        if((mp.boom[x-i][y]==-1 || mp.boom[x-i][y]==step) && !down_has_wall) return true;}
-
+            if((mp.iswall(x-i,y) || mp.isbox(x-i,y)) && !down_has_wall) down_has_wall = true;
+            if((mp.boom[x-i][y]==-1 || mp.boom[x-i][y]==step) && !down_has_wall) return true;
+		}
         // right wing
         if(mp.isinside(x, y+i)){
-        if((mp.iswall(x,y+i) || mp.isbox(x,y+i)) && !down_has_wall) down_has_wall = true;
-        if((mp.boom[x][y+i]==-1 || mp.boom[x][y+i]==step) && !down_has_wall) return true;}
-
+        	if((mp.iswall(x,y+i) || mp.isbox(x,y+i)) && !down_has_wall) down_has_wall = true;
+        	if((mp.boom[x][y+i]==-1 || mp.boom[x][y+i]==step) && !down_has_wall) return true;
+		}
         // left wing
         if(mp.isinside(x, y-i)){
-        if((mp.iswall(x,y-i) || mp.isbox(x,y-i)) && !down_has_wall) down_has_wall = true;
-        if((mp.boom[x][y-i]==-1 || mp.boom[x][y-i]==step) && !down_has_wall) return true;}
+        	if((mp.iswall(x,y-i) || mp.isbox(x,y-i)) && !down_has_wall) down_has_wall = true;
+        	if((mp.boom[x][y-i]==-1 || mp.boom[x][y-i]==step) && !down_has_wall) return true;
+		}
     }
     return false;
 
