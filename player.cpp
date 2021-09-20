@@ -1,5 +1,9 @@
 #include <bits/stdc++.h>
 
+#define F first
+#define S second
+#define pii pair <int,int>
+
 using namespace std;
 
 const int INF=1e7+9,N=30;
@@ -7,10 +11,14 @@ const int INF=1e7+9,N=30;
 // fixed game elements
 int vision,bombDelay,maxBombRange,zoneStart,zoneDelay,maxStep;
 // situation
-int step;
+int step,lastmove=4;
 bool enemySeen;
 // list of tiles that are currently in our vision in format of {x,y}
 vector <pair <int,int> > sight;
+
+struct Player{
+    int x,y,hp,bombRange,trapCount,hpupcnt;
+} me,enemy;
 
 struct Map{
     int height,width;
@@ -78,6 +86,64 @@ struct Map{
     bool isfree(int ind){
         return !(isbox(ind/width,ind%width) || iswall(ind/width,ind%width));
     }
+    // is the tile in range of a bomb (regardless of the time)
+    bool issafe(int x,int y){
+        // returning TRUE if tile can go boom! FALSE if safe
+        bool  lelf_has_wall = false, right_has_wall = false, up_has_wall = false,down_has_wall = false;
+        int bmbRange = me.bombRange; // can be changed by strategy
+        for (int i=1; i <= bmbRange; i++){
+            // down wing
+            if(isinside(x+i, y)){
+                if((iswall(x+i,y) || isbox(x+i,y)) && !down_has_wall) down_has_wall = true; //if there is a wall in this wings dont's check behind of it
+                if(isbomb(x+i,y) && !down_has_wall) return true;
+            }
+            // up wing
+            if(isinside(x-i, y)){
+                if((iswall(x-i,y) || isbox(x-i,y)) && !down_has_wall) down_has_wall = true;
+                if(isbomb(x-i,y) && !down_has_wall) return true;
+            }
+            // right wing
+            if(isinside(x, y+i)){
+                if((iswall(x,y+i) || isbox(x,y+i)) && !down_has_wall) down_has_wall = true;
+                if(isbomb(x,y+i) && !down_has_wall) return true;
+            }
+            // left wing
+            if(isinside(x, y-i)){
+                if((iswall(x,y-i) || isbox(x,y-i)) && !down_has_wall) down_has_wall = true;
+                if(isbomb(x,y-i) && !down_has_wall) return true;
+            }
+        }
+        return false;
+    }
+    // if the tile will explode next step
+    bool bombcheck(int x,int y){
+        // returning TRUE if tile can go boom! FALSE if safe
+        bool  lelf_has_wall = false, right_has_wall = false, up_has_wall = false,down_has_wall = false;
+        int bmbRange = me.bombRange; // can be changed by strategy
+        for (int i=1; i <= bmbRange; i++){
+            // down wing
+            if(isinside(x+i, y)){
+                if((iswall(x+i,y) || isbox(x+i,y)) && !down_has_wall) down_has_wall = true; //if there is a wall in this wings dont's check behind of it
+                if((boom[x+i][y]==-1 || boom[x+i][y]==step) && !down_has_wall) return true;
+            }
+            // up wing
+            if(isinside(x-i, y)){
+                if((iswall(x-i,y) || isbox(x-i,y)) && !down_has_wall) down_has_wall = true;
+                if((boom[x-i][y]==-1 || boom[x-i][y]==step) && !down_has_wall) return true;
+            }
+            // right wing
+            if(isinside(x, y+i)){
+                if((iswall(x,y+i) || isbox(x,y+i)) && !down_has_wall) down_has_wall = true;
+                if((boom[x][y+i]==-1 || boom[x][y+i]==step) && !down_has_wall) return true;
+            }
+            // left wing
+            if(isinside(x, y-i)){
+                if((iswall(x,y-i) || isbox(x,y-i)) && !down_has_wall) down_has_wall = true;
+                if((boom[x][y-i]==-1 || boom[x][y-i]==step) && !down_has_wall) return true;
+            }
+        }
+        return false;
+    }
     // refreshes the distances and paths after the new information
     void clean(){
         for(int i=0;i<N*N;i++) fill(dis[i],dis[i]+N*N,INF);
@@ -117,10 +183,6 @@ struct Map{
     }
 } mp;
 
-struct Player{
-    int x,y,hp,bombRange,trapCount,hpupcnt;
-} me,enemy;
-
 // wich step will the zone hit this tile
 int safety(int x,int y){
     return zoneStart+min(min(x+1,mp.height-x),min(y+1,mp.width-y))*zoneDelay;
@@ -143,40 +205,78 @@ int knife(){
     return -1;
 }
 
-// checking if the next move is dangerous (will go into bomb) and if yes doing something safe
-int bombcheck(int x, int y){
-    // returning TRUE if tile can go boom! FALSE if safe
-    bool  lelf_has_wall = false, right_has_wall = false, up_has_wall = false,down_has_wall = false;
-    int bmbRange = maxBombRange; // can be changed by strategy
-    for (int i=1; i <= bmbRange; i++){
-        // down wing
-        if(mp.isinside(x+i, y)){
-            if((mp.iswall(x+i,y) || mp.isbox(x+i,y)) && !down_has_wall) down_has_wall = true; //if there is a wall in this wings dont's check behind of it
-            if((mp.boom[x+i][y]==-1 || mp.boom[x+i][y]==step) && !down_has_wall) return true;
+// finding the best bomb to place to collect the most boxes (part of mining process)
+pair <int,int> bestbomb(){
+    int num,len;
+    pair <int,int> best;
+    for(pair <int,int> tile:sight){
+        int x=tile.first,y=tile.second;
+        if(mp.iswall(x,y) || mp.isbox(x,y)) continue ;
+        int broken=0,dis=mp.distance(me.x,me.y,x,y);
+        for(int i=x+1;i<=min(x+me.bombRange,mp.height-1);i++){
+            if(mp.isbox(i,y)){
+                broken++;
+                break;
+            }
+            if(mp.iswall(i,y)) break;
         }
-        // up wing
-        if(mp.isinside(x-i, y)){
-            if((mp.iswall(x-i,y) || mp.isbox(x-i,y)) && !down_has_wall) down_has_wall = true;
-            if((mp.boom[x-i][y]==-1 || mp.boom[x-i][y]==step) && !down_has_wall) return true;
-		}
-        // right wing
-        if(mp.isinside(x, y+i)){
-        	if((mp.iswall(x,y+i) || mp.isbox(x,y+i)) && !down_has_wall) down_has_wall = true;
-        	if((mp.boom[x][y+i]==-1 || mp.boom[x][y+i]==step) && !down_has_wall) return true;
-		}
-        // left wing
-        if(mp.isinside(x, y-i)){
-        	if((mp.iswall(x,y-i) || mp.isbox(x,y-i)) && !down_has_wall) down_has_wall = true;
-        	if((mp.boom[x][y-i]==-1 || mp.boom[x][y-i]==step) && !down_has_wall) return true;
-		}
+        for(int i=x-1;i>=max(x-me.bombRange,0);i--){
+            if(mp.isbox(i,y)){
+                broken++;
+                break;
+            }
+            if(mp.iswall(i,y)) break;
+        }
+        for(int i=y+1;i<=min(y+me.bombRange,mp.width-1);i++){
+            if(mp.isbox(x,i)){
+                broken++;
+                break;
+            }
+            if(mp.iswall(x,i)) break;
+        }
+        for(int i=y-1;i>=max(y-me.bombRange,0);i--){
+            if(mp.isbox(x,i)){
+                broken++;
+                break;
+            }
+            if(mp.iswall(x,i)) break;
+        }
+        if(make_pair(broken,dis)>make_pair(num,len)){
+            best=tile;
+            num=broken;
+            len=dis;
+        }
     }
-    return false;
+    return best;
+}
+
+// escaping from the bomb we just placed (part of the mining process)
+int escape(){
 
 }
 
-// finding the best bomb to place to collect the most boxes
-int mine(){
+// gathering the newly exploded boxes (part of the mining process)
+int collect(int x,int y){
 
+}
+
+// handling the mining process
+pair <int,int> chosen={-1,-1}; // the currnt target of placing the bomb
+int mine(){
+    for(pii tile:sight){
+        if(mp.ishp(tile.F,tile.S) || mp.istrap(tile.F,tile.S)) return collect(tile.F,tile.S);
+    }
+    if(!mp.issafe(me.x,me.y)){
+        return escape();
+    } 
+    if(chosen==make_pair(-1,-1)){
+        chosen=bestbomb();
+    } 
+    if(me.x==chosen.F && me.y==chosen.S){
+        chosen={-1,-1};
+        return 5;
+    }
+    return mp.nextmove(me.x,me.y,chosen.F,chosen.S);
 }
 
 // checking whether we should move to centre and finding the best way to do so
@@ -208,8 +308,7 @@ int main(){
     cout<<"init confirm"<<endl;
     mp.init();
     while(true){
-        int last;
-        cin>>step>>last>>me.x>>me.y>>me.hp>>me.hpupcnt>>me.bombRange>>me.trapCount;
+        cin>>step>>lastmove>>me.x>>me.y>>me.hp>>me.hpupcnt>>me.bombRange>>me.trapCount;
         cin>>enemySeen;
         if(enemySeen) cin>>enemy.x>>enemy.y>>enemy.hp;
         int n;
