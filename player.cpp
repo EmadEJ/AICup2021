@@ -42,7 +42,7 @@ struct Map{
         }
         insight[x][y]=1;
         stt[x][y]=val;
-        stt[height-x-1][width-y-1]=val&13;
+        if(stt[height-x-1][width-y-1]&(1<<9)) stt[height-x-1][width-y-1]=val&13;
     }
     // checking the state
     bool iszone(int x,int y){
@@ -89,36 +89,38 @@ struct Map{
     // is the tile in range of a bomb (regardless of the time)
     bool issafe(int x,int y){
         // returning TRUE if tile can go boom! FALSE if safe
-        bool  lelf_has_wall = false, right_has_wall = false, up_has_wall = false,down_has_wall = false;
+        if(isbomb(x,y)==1) return 0;
+        bool  left_has_wall = false, right_has_wall = false, up_has_wall = false,down_has_wall = false;
         int bmbRange = me.bombRange; // can be changed by strategy
         for (int i=1; i <= bmbRange; i++){
             // down wing
             if(isinside(x+i, y)){
                 if((iswall(x+i,y) || isbox(x+i,y)) && !down_has_wall) down_has_wall = true; //if there is a wall in this wings dont's check behind of it
-                if(isbomb(x+i,y) && !down_has_wall) return true;
+                if(isbomb(x+i,y) && !down_has_wall) return 0;
             }
             // up wing
             if(isinside(x-i, y)){
-                if((iswall(x-i,y) || isbox(x-i,y)) && !down_has_wall) down_has_wall = true;
-                if(isbomb(x-i,y) && !down_has_wall) return true;
+                if((iswall(x-i,y) || isbox(x-i,y)) && !up_has_wall) up_has_wall = true;
+                if(isbomb(x-i,y) && !up_has_wall) return 0;
             }
             // right wing
             if(isinside(x, y+i)){
-                if((iswall(x,y+i) || isbox(x,y+i)) && !down_has_wall) down_has_wall = true;
-                if(isbomb(x,y+i) && !down_has_wall) return true;
+                if((iswall(x,y+i) || isbox(x,y+i)) && !right_has_wall) right_has_wall = true;
+                if(isbomb(x,y+i) && !right_has_wall) return 0;
             }
             // left wing
             if(isinside(x, y-i)){
-                if((iswall(x,y-i) || isbox(x,y-i)) && !down_has_wall) down_has_wall = true;
-                if(isbomb(x,y-i) && !down_has_wall) return true;
+                if((iswall(x,y-i) || isbox(x,y-i)) && !left_has_wall) left_has_wall = true;
+                if(isbomb(x,y-i) && !left_has_wall) return 0;
             }
         }
-        return false;
+        return 1;
     }
     // if the tile will explode next step
     bool bombcheck(int x,int y){
         // returning TRUE if tile can go boom! FALSE if safe
-        bool  lelf_has_wall = false, right_has_wall = false, up_has_wall = false,down_has_wall = false;
+        if(boom[x][y]==-1 || boom[x][y]==step) return true;
+        bool  left_has_wall = false, right_has_wall = false, up_has_wall = false,down_has_wall = false;
         int bmbRange = me.bombRange; // can be changed by strategy
         for (int i=1; i <= bmbRange; i++){
             // down wing
@@ -128,18 +130,18 @@ struct Map{
             }
             // up wing
             if(isinside(x-i, y)){
-                if((iswall(x-i,y) || isbox(x-i,y)) && !down_has_wall) down_has_wall = true;
-                if((boom[x-i][y]==-1 || boom[x-i][y]==step) && !down_has_wall) return true;
+                if((iswall(x-i,y) || isbox(x-i,y)) && !up_has_wall) up_has_wall = true;
+                if((boom[x-i][y]==-1 || boom[x-i][y]==step) && !up_has_wall) return true;
             }
             // right wing
             if(isinside(x, y+i)){
-                if((iswall(x,y+i) || isbox(x,y+i)) && !down_has_wall) down_has_wall = true;
-                if((boom[x][y+i]==-1 || boom[x][y+i]==step) && !down_has_wall) return true;
+                if((iswall(x,y+i) || isbox(x,y+i)) && !right_has_wall) right_has_wall = true;
+                if((boom[x][y+i]==-1 || boom[x][y+i]==step) && !right_has_wall) return true;
             }
             // left wing
             if(isinside(x, y-i)){
-                if((iswall(x,y-i) || isbox(x,y-i)) && !down_has_wall) down_has_wall = true;
-                if((boom[x][y-i]==-1 || boom[x][y-i]==step) && !down_has_wall) return true;
+                if((iswall(x,y-i) || isbox(x,y-i)) && !left_has_wall) left_has_wall = true;
+                if((boom[x][y-i]==-1 || boom[x][y-i]==step) && !left_has_wall) return true;
             }
         }
         return false;
@@ -160,9 +162,9 @@ struct Map{
             }
         }
         int surface=width*height;
-        for(int i=0;i<surface;i++){
+        for(int k=0;k<surface;k++){
             for(int j=0;j<surface;j++){
-                for(int k=0;k<surface;k++){
+                for(int i=0;i<surface;i++){
                     if(dis[i][k]+dis[k][j]<dis[i][j]){
                         dis[i][j]=dis[i][k]+dis[k][j];
                         nxt[i][j]=nxt[i][k];
@@ -190,7 +192,7 @@ int safety(int x,int y){
 
 // handling when we meet enemy in the middle
 int mantoman(){
-
+    return 0;
 }
 
 // when we're side by side with enemy retruns the right move
@@ -207,12 +209,13 @@ int knife(){
 
 // finding the best bomb to place to collect the most boxes (part of mining process)
 pair <int,int> bestbomb(){
-    int num,len;
-    pair <int,int> best;
+    int num=0,len=INF;
+    pair <int,int> best={-1,-1};
     for(pair <int,int> tile:sight){
         int x=tile.first,y=tile.second;
         if(mp.iswall(x,y) || mp.isbox(x,y)) continue ;
         int broken=0,dis=mp.distance(me.x,me.y,x,y);
+        if(dis==INF) continue;
         for(int i=x+1;i<=min(x+me.bombRange,mp.height-1);i++){
             if(mp.isbox(i,y)){
                 broken++;
@@ -241,7 +244,7 @@ pair <int,int> bestbomb(){
             }
             if(mp.iswall(x,i)) break;
         }
-        if(make_pair(broken,dis)>make_pair(num,len)){
+        if(make_pair(broken,-dis)>make_pair(num,-len)){
             best=tile;
             num=broken;
             len=dis;
@@ -252,19 +255,46 @@ pair <int,int> bestbomb(){
 
 // escaping from the bomb we just placed (part of the mining process)
 int escape(){
-
+    int dis=INF;
+    pii best;
+    for(int i=0;i<mp.height;i++){
+        for(int j=0;j<mp.width;j++){
+            if(!mp.isdark(i,j) && mp.issafe(i,j) && mp.distance(me.x,me.y,i,j)<dis){
+                dis=mp.distance(me.x,me.y,i,j);
+                best={i,j};
+            }
+        }
+    }
+    return mp.nextmove(me.x,me.y,best.F,best.S);
 }
 
 // gathering the newly exploded boxes (part of the mining process)
-int collect(int x,int y){
-
+int collect(){
+    int dis=INF;
+    pii best;
+    for(pii tile:sight){
+        int  x=tile.F,y=tile.S;
+        if((mp.ishp(x,y) || mp.istrap(x,y) || mp.isbombupgrade(x,y)) && mp.distance(me.x,me.y,x,y)<dis){
+            dis=mp.distance(me.x,me.y,x,y);
+            best={x,y};
+        }
+    }
+    return mp.nextmove(me.x,me.y,best.F,best.S);
 }
 
 // handling the mining process
 pair <int,int> chosen={-1,-1}; // the currnt target of placing the bomb
 int mine(){
+    if(chosen!=make_pair(-1,-1) && mp.isfire(chosen.F,chosen.S)){
+        chosen={-1,-1};
+    }
+    if(chosen!=make_pair(-1,-1) && mp.isbomb(chosen.F,chosen.S) && mp.issafe(me.x,me.y)){
+        return 4;
+    }
     for(pii tile:sight){
-        if(mp.ishp(tile.F,tile.S) || mp.istrap(tile.F,tile.S)) return collect(tile.F,tile.S);
+        if(mp.ishp(tile.F,tile.S) || mp.istrap(tile.F,tile.S) || mp.isbombupgrade(tile.F,tile.S)){
+            return collect();
+        } 
     }
     if(!mp.issafe(me.x,me.y)){
         return escape();
@@ -273,7 +303,6 @@ int mine(){
         chosen=bestbomb();
     } 
     if(me.x==chosen.F && me.y==chosen.S){
-        chosen={-1,-1};
         return 5;
     }
     return mp.nextmove(me.x,me.y,chosen.F,chosen.S);
@@ -299,7 +328,8 @@ int centralize(){
 
 // evaluating the phase we are in and what functions to use (this should be completed last)
 int evaluate(){
-    return centralize();
+    if(step<zoneStart-20) return mine();
+    else return centralize();
 }
 
 int main(){
