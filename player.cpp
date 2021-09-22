@@ -208,9 +208,19 @@ int centralize(){
     return mp.nextmove(me.x,me.y,best.first,best.second);
 }
 
+// exploring the map when you see no box to destroy
+int explore(){
+    
+}
+
 // handling when we meet enemy in the middle
 int mantoman(){
     return 0;
+}
+
+// escaping from enemy in dire situations
+int runaway(){
+    
 }
 
 // when we're side by side with enemy retruns the right move
