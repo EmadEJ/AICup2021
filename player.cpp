@@ -311,22 +311,18 @@ int mine(){
     }
     for(pii tile:sight){
         if(mp.ishp(tile.F,tile.S) || mp.istrap(tile.F,tile.S) || mp.isbombupgrade(tile.F,tile.S)){
-            cerr<<"!";
             chosen={-1,-1};
             return collect();
         } 
     }
     if(!mp.issafe(me.x,me.y)){
-        cerr<<"@";
         return escape();
     } 
     if(chosen==make_pair(-1,-1)){
-        cerr<<"#";
         chosen=bestbomb();
         if(chosen==make_pair(-1,-1)) return centralize();
     } 
     if(me.x==chosen.F && me.y==chosen.S){
-        cerr<<"$";
         return 5;
     }
     return mp.nextmove(me.x,me.y,chosen.F,chosen.S);
