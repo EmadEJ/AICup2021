@@ -190,6 +190,24 @@ int safety(int x,int y){
     return zoneStart+min(min(x+1,mp.height-x),min(y+1,mp.width-y))*zoneDelay;
 }
 
+// checking whether we should move to centre and finding the best way to do so
+int centralize(){
+    int dis=INF,safe=0;
+    pair <int,int> best;
+    for(int i=0;i<mp.height;i++){
+        for(int j=0;j<mp.width;j++){
+            if(!mp.isdark(i,j)){
+                if((safety(i,j)>safe && mp.distance(me.x,me.y,i,j)!=INF) || (safety(i,j)==safe && mp.distance(me.x,me.y,i,j)<dis)){
+                    dis=mp.distance(me.x,me.y,i,j);
+                    best={i,j};
+                    safe=safety(i,j);
+                }
+            }
+        }
+    }
+    return mp.nextmove(me.x,me.y,best.first,best.second);
+}
+
 // handling when we meet enemy in the middle
 int mantoman(){
     return 0;
@@ -197,7 +215,7 @@ int mantoman(){
 
 // when we're side by side with enemy retruns the right move
 int knife(){
-    if(me.hp>=enemy.hp){
+    if(me.hp>=enemy.hp && me.trapCount>0){
         if(me.x==enemy.x && me.y==enemy.y+1) return 6;
         if(me.x==enemy.x && me.y==enemy.y-1) return 7;
         if(me.y==enemy.y && me.x==enemy.x+1) return 8;
@@ -209,7 +227,7 @@ int knife(){
 
 // finding the best bomb to place to collect the most boxes (part of mining process)
 pair <int,int> bestbomb(){
-    int num=0,len=INF;
+    int num=1,len=INF;
     pair <int,int> best={-1,-1};
     for(pair <int,int> tile:sight){
         int x=tile.first,y=tile.second;
@@ -293,42 +311,31 @@ int mine(){
     }
     for(pii tile:sight){
         if(mp.ishp(tile.F,tile.S) || mp.istrap(tile.F,tile.S) || mp.isbombupgrade(tile.F,tile.S)){
+            cerr<<"!";
+            chosen={-1,-1};
             return collect();
         } 
     }
     if(!mp.issafe(me.x,me.y)){
+        cerr<<"@";
         return escape();
     } 
     if(chosen==make_pair(-1,-1)){
+        cerr<<"#";
         chosen=bestbomb();
+        if(chosen==make_pair(-1,-1)) return centralize();
     } 
     if(me.x==chosen.F && me.y==chosen.S){
+        cerr<<"$";
         return 5;
     }
     return mp.nextmove(me.x,me.y,chosen.F,chosen.S);
 }
 
-// checking whether we should move to centre and finding the best way to do so
-int centralize(){
-    int dis=INF,safe=0;
-    pair <int,int> best;
-    for(int i=0;i<mp.height;i++){
-        for(int j=0;j<mp.width;j++){
-            if(!mp.isdark(i,j)){
-                if((safety(i,j)>safe && mp.distance(me.x,me.y,i,j)!=INF) || (safety(i,j)==safe && mp.distance(me.x,me.y,i,j)<dis)){
-                    dis=mp.distance(me.x,me.y,i,j);
-                    best={i,j};
-                    safe=safety(i,j);
-                }
-            }
-        }
-    }
-    return mp.nextmove(me.x,me.y,best.first,best.second);
-}
-
 // evaluating the phase we are in and what functions to use (this should be completed last)
 int evaluate(){
-    if(step<zoneStart-20) return mine();
+    if(enemySeen && knife()!=-1) return knife();
+    if(step<zoneStart) return mine();
     else return centralize();
 }
 
