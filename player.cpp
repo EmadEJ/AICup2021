@@ -72,6 +72,9 @@ struct Map{
     bool isplayer(int x,int y){
         return (stt[x][y]>>8)%2;
     }
+    bool isenemy(int x,int y){
+        return (enemy.x==x && enemy.y==y);
+    }    
     bool isdark(int x,int y){
         return (stt[x][y]>>9)%2;
     }
@@ -84,7 +87,7 @@ struct Map{
         return (x>=0 && x<height && y>=0 && y<width);
     }
     bool isfree(int ind){
-        return !(isbox(ind/width,ind%width) || iswall(ind/width,ind%width));
+        return !(isbox(ind/width,ind%width) || iswall(ind/width,ind%width) ||  isenemy(ind/width,ind%width));
     }
     // is the tile in range of a bomb (regardless of the time)
     bool issafe(int x,int y){
@@ -215,7 +218,9 @@ int explore(){
 
 // handling when we meet enemy in the middle
 int mantoman(){
-    return 0;
+    if(!enemySeen) return -1;
+    if(safety(me.x,me.y)<safety(enemy.x,enemy.y)) return -1;
+    if(((me.x^me.y)&1)==((enemy.x^enemy.y)&1)) return 4;
 }
 
 // escaping from enemy in dire situations
@@ -223,7 +228,7 @@ int runaway(){
     
 }
 
-// when we're side by side with enemy retruns the right move
+// when we're side by side with enemy returns the right move
 int knife(){
     if(me.hp>=enemy.hp && me.trapCount>0){
         if(me.x==enemy.x && me.y==enemy.y+1) return 6;
