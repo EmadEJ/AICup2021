@@ -216,21 +216,9 @@ int explore(){
     
 }
 
-// handling when we meet enemy in the middle
-int mantoman(){
-    if(!enemySeen) return -1;
-    if(safety(me.x,me.y)<safety(enemy.x,enemy.y)) return -1;
-    if(((me.x^me.y)&1)==((enemy.x^enemy.y)&1)) return 4;
-}
-
-// escaping from enemy in dire situations
-int runaway(){
-    
-}
-
-// when we're side by side with enemy returns the right move
+// when we're side by side with enemy returns the right move (part of mantoman process)
 int knife(){
-    if(me.hp>=enemy.hp && me.trapCount>0){
+    if(me.trapCount>0){
         if(me.x==enemy.x && me.y==enemy.y+1) return 6;
         if(me.x==enemy.x && me.y==enemy.y-1) return 7;
         if(me.y==enemy.y && me.x==enemy.x+1) return 8;
@@ -238,6 +226,37 @@ int knife(){
     }
     // if it's not a good decision to punch and we should escape it returns -1
     return -1;
+}
+
+// handling when we meet enemy in the middle
+int mantoman(){
+    if(!enemySeen) return -1;
+    if(safety(me.x,me.y)<=safety(enemy.x,enemy.y)) return -1;
+    if(knife()!=-1) return knife();
+    if(((me.x==enemy.x-1)&&(me.y==enemy.y-1)) || ((me.x==enemy.x+1)&&(me.y==enemy.y-1)) || ((me.x==enemy.x-1)&&(me.y==enemy.y+1)) || ((me.x==enemy.x+1)&&(me.y==enemy.y+1))){
+        return 4;
+    }
+    if(((me.x==enemy.x)&&(me.y==enemy.y-2)) || ((me.x==enemy.x)&&(me.y==enemy.y+2)) || ((me.x==enemy.x-2)&&(me.y==enemy.y)) || ((me.x==enemy.x+2)&&(me.y==enemy.y))){
+        return 4;
+    }
+    if(((me.x==enemy.x+3)&&(me.y==enemy.y)) || ((me.x==enemy.x+2)&&(me.y==enemy.y-1)) || ((me.x==enemy.x+2)&&(me.y==enemy.y+1))){
+        return 0;
+    }
+    if(((me.x==enemy.x-3)&&(me.y==enemy.y)) || ((me.x==enemy.x-2)&&(me.y==enemy.y-1)) || ((me.x==enemy.x-2)&&(me.y==enemy.y+1))){
+        return 1;
+    }
+    if(((me.x==enemy.x)&&(me.y==enemy.y+3)) || ((me.x==enemy.x-1)&&(me.y==enemy.y+2)) || ((me.x==enemy.x+1)&&(me.y==enemy.y+2))){
+        return 2;
+    }
+    if(((me.x==enemy.x)&&(me.y==enemy.y-3)) || ((me.x==enemy.x-1)&&(me.y==enemy.y-2)) || ((me.x==enemy.x+1)&&(me.y==enemy.y-2))){
+        return 3;
+    }
+    return -1;
+}
+
+// escaping from enemy in dire situations
+int runaway(){
+    
 }
 
 // finding the best bomb to place to collect the most boxes (part of mining process)
@@ -345,8 +364,8 @@ int mine(){
 
 // evaluating the phase we are in and what functions to use (this should be completed last)
 int evaluate(){
-    if(enemySeen && knife()!=-1) return knife();
-    if(step<zoneStart) return mine();
+    if(enemySeen && mantoman()!=-1) return mantoman();
+    if(step<zoneStart-10) return mine();
     else return centralize();
 }
 
