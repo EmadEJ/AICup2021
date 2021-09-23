@@ -364,7 +364,8 @@ int mine(){
 
 // evaluating the phase we are in and what functions to use (this should be completed last)
 int evaluate(){
-    if(enemySeen && mantoman()!=-1) return mantoman();
+    if(enemySeen && knife()!=-1) return knife();
+    if(step<zoneStart-20 && enemySeen && me.trapCount()>0 && mantoman()!=-1) return mantoman();
     if(step<zoneStart-10) return mine();
     else return centralize();
 }
