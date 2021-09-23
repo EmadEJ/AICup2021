@@ -240,16 +240,16 @@ int mantoman(){
         return 4;
     }
     if(((me.x==enemy.x+3)&&(me.y==enemy.y)) || ((me.x==enemy.x+2)&&(me.y==enemy.y-1)) || ((me.x==enemy.x+2)&&(me.y==enemy.y+1))){
-        return 0;
-    }
-    if(((me.x==enemy.x-3)&&(me.y==enemy.y)) || ((me.x==enemy.x-2)&&(me.y==enemy.y-1)) || ((me.x==enemy.x-2)&&(me.y==enemy.y+1))){
-        return 1;
-    }
-    if(((me.x==enemy.x)&&(me.y==enemy.y+3)) || ((me.x==enemy.x-1)&&(me.y==enemy.y+2)) || ((me.x==enemy.x+1)&&(me.y==enemy.y+2))){
         return 2;
     }
-    if(((me.x==enemy.x)&&(me.y==enemy.y-3)) || ((me.x==enemy.x-1)&&(me.y==enemy.y-2)) || ((me.x==enemy.x+1)&&(me.y==enemy.y-2))){
+    if(((me.x==enemy.x-3)&&(me.y==enemy.y)) || ((me.x==enemy.x-2)&&(me.y==enemy.y-1)) || ((me.x==enemy.x-2)&&(me.y==enemy.y+1))){
         return 3;
+    }
+    if(((me.x==enemy.x)&&(me.y==enemy.y+3)) || ((me.x==enemy.x-1)&&(me.y==enemy.y+2)) || ((me.x==enemy.x+1)&&(me.y==enemy.y+2))){
+        return 0;
+    }
+    if(((me.x==enemy.x)&&(me.y==enemy.y-3)) || ((me.x==enemy.x-1)&&(me.y==enemy.y-2)) || ((me.x==enemy.x+1)&&(me.y==enemy.y-2))){
+        return 1;
     }
     return -1;
 }
@@ -365,7 +365,7 @@ int mine(){
 // evaluating the phase we are in and what functions to use (this should be completed last)
 int evaluate(){
     if(enemySeen && knife()!=-1) return knife();
-    if(step<zoneStart-20 && enemySeen && me.trapCount()>0 && mantoman()!=-1) return mantoman();
+    if(step>zoneStart-20 && enemySeen && me.trapCount()>0 && mantoman()!=-1) return mantoman();
     if(step<zoneStart-10) return mine();
     else return centralize();
 }
