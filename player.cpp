@@ -10,7 +10,7 @@ const int INF=1e7+9,N=30;
 
 // fixed game elements
 int vision,bombDelay,maxBombRange,zoneStart,zoneDelay,maxStep;
-// situation
+// situationcentralize()
 int step,lastmove=4;
 bool enemySeen;
 // list of tiles that are currently in our vision in format of {x,y}
@@ -129,22 +129,22 @@ struct Map{
             // down wing
             if(isinside(x+i, y)){
                 if((iswall(x+i,y) || isbox(x+i,y)) && !down_has_wall) down_has_wall = true; //if there is a wall in this wings dont's check behind of it
-                if((boom[x+i][y]==-1 || boom[x+i][y]==step) && !down_has_wall) return true;
+                if((boom[x+i][y]==-1 || boom[x+i][y]==step || boom[x+i][y]==step+1) && !down_has_wall) return true;
             }
             // up wing
             if(isinside(x-i, y)){
                 if((iswall(x-i,y) || isbox(x-i,y)) && !up_has_wall) up_has_wall = true;
-                if((boom[x-i][y]==-1 || boom[x-i][y]==step) && !up_has_wall) return true;
+                if((boom[x-i][y]==-1 || boom[x-i][y]==step || boom[x-i][y]==step+1) && !up_has_wall) return true;
             }
             // right wing
             if(isinside(x, y+i)){
                 if((iswall(x,y+i) || isbox(x,y+i)) && !right_has_wall) right_has_wall = true;
-                if((boom[x][y+i]==-1 || boom[x][y+i]==step) && !right_has_wall) return true;
+                if((boom[x][y+i]==-1 || boom[x][y+i]==step || boom[x][y+i]==step+1) && !right_has_wall) return true;
             }
             // left wing
             if(isinside(x, y-i)){
                 if((iswall(x,y-i) || isbox(x,y-i)) && !left_has_wall) left_has_wall = true;
-                if((boom[x][y-i]==-1 || boom[x][y-i]==step) && !left_has_wall) return true;
+                if((boom[x][y-i]==-1 || boom[x][y-i]==step || boom[x][y-i]==step+1) && !left_has_wall) return true;
             }
         }
         return false;
@@ -354,7 +354,7 @@ int mine(){
     } 
     if(chosen==make_pair(-1,-1)){
         chosen=bestbomb();
-        if(chosen==make_pair(-1,-1)) return centralize();
+        if(chosen==make_pair(-1,-1)) return explore();
     } 
     if(me.x==chosen.F && me.y==chosen.S){
         return 5;
@@ -365,8 +365,8 @@ int mine(){
 // evaluating the phase we are in and what functions to use (this should be completed last)
 int evaluate(){
     if(enemySeen && knife()!=-1) return knife();
-    if(step>zoneStart-20 && enemySeen && me.trapCount()>0 && mantoman()!=-1) return mantoman();
-    if(step<zoneStart-10) return mine();
+    if(step>zoneStart-20 && enemySeen && me.trapCount>0 && mantoman()!=-1) return mantoman();
+    if(step<zoneStart-max(mp.height,mp.width)) return mine();
     else return centralize();
 }
 
@@ -393,6 +393,12 @@ int main(){
         string eom;
         cin>>eom;
         int res=evaluate();
+        int newx=me.x,newy=me.y;
+        if(res==0) newx--;
+        if(res==1) newx++;
+        if(res==2) newy--;
+        if(res==3) newy++;
+        if(mp.bombcheck(newx,newy)) res=escape();
         cout<<res<<endl;
     }
     return 0;
