@@ -74,7 +74,7 @@ struct Map{
     }
     bool isenemy(int x,int y){
         return (enemy.x==x && enemy.y==y);
-    }    
+    }
     bool isdark(int x,int y){
         return (stt[x][y]>>9)%2;
     }
@@ -186,13 +186,13 @@ struct Map{
         int ind1=x1*width+y1,ind2=x2*width+y2;
         return nxt[ind1][ind2];
     }
-    
+
     pair <int,int> center (){
 		return {height/2 , width/2};
 	}
 } mp;
 
-// wich step will the zone hit this tile
+// which step will the zone hit this tile
 int safety(int x,int y){
     return zoneStart+min(min(x+1,mp.height-x),min(y+1,mp.width-y))*zoneDelay;
 }
@@ -214,23 +214,62 @@ int centralize(){
     }
     return mp.nextmove(me.x,me.y,best.first,best.second);
 }
-/*
+
+
 // exploring the map when you see no box to destroy
+
+// the (x,y) vector direction towards center
+pair <int,int> centerdir(){
+	pii center = mp.center();
+	int xdir, ydir;
+	if(me.x < center.F){
+	    ydir = 3;
+	} else {
+		ydir = 2;
+	}
+	if (me.y < center.S){
+		xdir = 1;
+	} else{
+		xdir = 0;
+	}
+	return {xdir,ydir};
+}
+
+// the (x,y) vector direction away from center
+pair <int,int> centerdirnegative(){
+	pii center = mp.center();
+	int xdir, ydir;
+	if(me.x < center.F){
+	    ydir = 2;
+	} else {
+		ydir = 3;
+	}
+	if (me.y < center.S){
+		xdir = 0;
+	} else{
+		xdir = 1;
+	}
+	return {xdir,ydir};
+}
+
 int dirlen = 2;
 int dirstep = 0;
 int dir = -1;
-int explore(){
+
+//another version of explore. this one uses a weighted random selection to pick a direction to follow for the next couple of moves (dirlen)
+int explore1(){
 	//random initialization
     srand(unsigned(time(0)));
 
 	pii best;
 	int bestdis = INF;
+    pii cdir = centerdir();
+    pii cdirneg = centerdirnegative();
 
-	if (dir == --1 || !(dirstep > 0)) { 
-		pii cdir = centerdir();
-		pii cdirneg = centerdirnegative();
-
+	if (dir == -1 || !(dirstep > 0)) {
 		vector<int> rnd;
+		int x = me.x;
+		int y = me.y;
 		for(int i = 0; i < mp.height + mp.width ; i ++){
 			if(i < min(x,mp.height - x) * 2) {
 			rnd.push_back(cdirneg.F);
@@ -242,7 +281,7 @@ int explore(){
 			rnd.push_back(cdirneg.S);
 			}
 		}
-	
+
 		random_shuffle(rnd.begin(), rnd.end());
 		dir = rnd[0];
 		dirstep = dirlen;
@@ -251,7 +290,7 @@ int explore(){
 	for (pii tile:sight){
 		int x = tile.F;
 		int y = tile.S;
-		int dis = mp.distance(me.x,me.y,x,y)
+		int dis = mp.distance(me.x,me.y,x,y);
 
 		if(dir == 0) {
 			if(y >= me.y) continue;
@@ -274,40 +313,21 @@ int explore(){
 	return mp.nextmove(me.x,me.y,best.F,best.S);
 }
 
-// the (x,y) vector direction towards center
-pair <int,int> centerdir(){
-	pii center = mp.center;	
-	int xdir, ydir;
-	if(me.x < center.F){
-	    ydir = 3;
-	} else {
-		ydir = 2;
-	}
-	if (me.y < center.S){
-		xdir = 1;
-	} else{
-		xdir = 0;
-	}
-	return {xdir,ydir};
+//yet another version of explore. in this one, the character checks to see if there is any other box remaining in the map that we know of. (which there probably is, since the map is mirrored around a point)
+int explore2(){
+    int dis=INF;
+    pii best={-1,-1};
+    for(int i=0;i<mp.height;i++){
+        for(int j=0;j<mp.width;j++){
+            if(mp.isbox(i,j) && mp.distance(me.x,me.y,i,j)<dis){
+                best={i,j};
+                dis=mp.distance(me.x,me.y,i,j);
+            }
+        }
+    }
+    if (best == make_pair (-1,-1)) return 4;
+    return mp.nextmove(me.x,me.y,best.F,best.S);
 }
-
-// the (x,y) vector direction away from center
-pair <int,int> centerdirnegative(){
-	pii center = mp.center;	
-	int xdir, ydir;
-	if(me.x < center.F){
-	    ydir = 2;
-	} else {
-		ydir = 3;
-	}
-	if (me.y < center.S){
-		xdir = 0;
-	} else{
-		xdir = 1;
-	}
-	return {xdir,ydir};
-}
-*/
 
 // exploring the map when you see no box to destroy
 int explore(){
@@ -366,7 +386,7 @@ int mantoman(){
 
 // escaping from enemy in dire situations
 int runaway(){
-    
+
 }
 
 // finding the best bomb to place to collect the most boxes (part of mining process)
@@ -457,15 +477,15 @@ int mine(){
         if(mp.ishp(tile.F,tile.S) || mp.istrap(tile.F,tile.S) || mp.isbombupgrade(tile.F,tile.S)){
             chosen={-1,-1};
             return collect();
-        } 
+        }
     }
     if(!mp.issafe(me.x,me.y)){
         return escape();
-    } 
+    }
     if(chosen==make_pair(-1,-1)){
         chosen=bestbomb();
         if(chosen==make_pair(-1,-1)) return explore();
-    } 
+    }
     if(me.x==chosen.F && me.y==chosen.S){
         return 5;
     }
