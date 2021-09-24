@@ -186,6 +186,10 @@ struct Map{
         int ind1=x1*width+y1,ind2=x2*width+y2;
         return nxt[ind1][ind2];
     }
+    
+    pair <int,int> center (){
+		return {height/2 , width/2};
+	}
 } mp;
 
 // wich step will the zone hit this tile
@@ -212,8 +216,96 @@ int centralize(){
 }
 
 // exploring the map when you see no box to destroy
+int dirlen = 2;
+int dirstep = 0;
+int dir = -1;
 int explore(){
-    
+	//random initialization
+    srand(unsigned(time(0)));
+
+	pii best;
+	int bestdis = INF;
+
+	if (dir == --1 || !(dirstep > 0)) { 
+		pii cdir = centerdir();
+		pii cdirneg = centerdirnegative();
+
+		vector<int> rnd;
+		for(int i = 0; i < mp.height + mp.width ; i ++){
+			if(i < min(x,mp.height - x) * 2) {
+			rnd.push_back(cdirneg.F);
+			} else if (i < mp.height){
+			rnd.push_back(cdir.F);
+			} else if(i < min(y,mp.width - y) * 2 + mp.height){
+			rnd.push_back(cdirneg.S);
+			} else {
+			rnd.push_back(cdirneg.S);
+			}
+		}
+	
+		random_shuffle(rnd.begin(), rnd.end());
+		dir = rnd[0];
+		dirstep = dirlen;
+	}
+
+	for (pii tile:sight){
+		int x = tile.F;
+		int y = tile.S;
+		int dis = mp.distance(me.x,me.y,x,y)
+
+		if(dir == 0) {
+			if(y >= me.y) continue;
+			if(dis < bestdis) best = tile;
+		} else if (dir == 1){
+			if(y <= me.y) continue;
+			if(dis < bestdis) best = tile;
+		} else if (dir == 2){
+			if(x >= me.x) continue;
+			if(dis < bestdis) best = tile;
+		} else if (dir == 3) {
+			if(x >= me.x) continue;
+			if(dis < bestdis) best = tile;
+		} else {
+			return -1;
+		}
+	}
+
+	dirstep --;
+	return mp.nextmove(me.x,me.y,best.F,best.S);
+}
+
+// the (x,y) vector direction towards center
+pair <int,int> centerdir(){
+	pii center = mp.center;	
+	int xdir, ydir;
+	if(me.x < center.F){
+	    ydir = 3;
+	} else {
+		ydir = 2;
+	}
+	if (me.y < center.S){
+		xdir = 1;
+	} else{
+		xdir = 0;
+	}
+	return {xdir,ydir};
+}
+
+// the (x,y) vector direction away from center
+pair <int,int> centerdirnegative(){
+	pii center = mp.center;	
+	int xdir, ydir;
+	if(me.x < center.F){
+	    ydir = 2;
+	} else {
+		ydir = 3;
+	}
+	if (me.y < center.S){
+		xdir = 0;
+	} else{
+		xdir = 1;
+	}
+	return {xdir,ydir};
 }
 
 // when we're side by side with enemy returns the right move (part of mantoman process)
