@@ -214,7 +214,7 @@ int centralize(){
     }
     return mp.nextmove(me.x,me.y,best.first,best.second);
 }
-
+/*
 // exploring the map when you see no box to destroy
 int dirlen = 2;
 int dirstep = 0;
@@ -307,6 +307,24 @@ pair <int,int> centerdirnegative(){
 	}
 	return {xdir,ydir};
 }
+*/
+
+// exploring the map when you see no box to destroy
+int explore(){
+    int dis=INF;
+    pii best={-1,-1};
+    for(int i=0;i<mp.height;i++){
+        for(int j=0;j<mp.width;j++){
+            if(mp.isdark(i,j) && mp.distance(me.x,me.y,i,j)<dis){
+                best={i,j};
+                dis=mp.distance(me.x,me.y,i,j);
+            }
+        }
+    }
+    if(best.F==-1) return -1;
+    return mp.nextmove(me.x,me.y,best.F,best.S);
+}
+
 
 // when we're side by side with enemy returns the right move (part of mantoman process)
 int knife(){
