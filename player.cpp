@@ -524,10 +524,11 @@ int evaluate(){
     int res;
     if(step>zoneStart-20 && enemySeen && me.trapCount>0 && mp.distance(me.x,me.y,enemy.x,enemy.y)<5 && mantoman()!=-1) res=mantoman();
     if(step<zoneStart-max(mp.height,mp.width)-6) res=mine();
-    else{
+    else if(centralize()!=4){
         if((step%(bombDelay+2))<2) return 5;
         else return centralize();
     }
+    else res=centralize();
     int newx=me.x,newy=me.y;
     if(res==0) newy--;
     if(res==1) newy++;
