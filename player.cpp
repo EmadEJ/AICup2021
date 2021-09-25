@@ -492,6 +492,7 @@ int mine(){
     if(me.x==chosen.F && me.y==chosen.S){
         return 5;
     }
+    cerr<<chosen.F<<" "<<chosen.S<<endl;
     return mp.nextmove(me.x,me.y,chosen.F,chosen.S);
 }
 
@@ -522,8 +523,11 @@ int evaluate(){
     }
     int res;
     if(step>zoneStart-20 && enemySeen && me.trapCount>0 && mp.distance(me.x,me.y,enemy.x,enemy.y)<5 && mantoman()!=-1) res=mantoman();
-    if(step<zoneStart-max(mp.height,mp.width)) res=mine();
-    else res=centralize();
+    if(step<zoneStart-max(mp.height,mp.width)-6) res=mine();
+    else{
+        if((step%(bombDelay+2))<2) return 5;
+        else return centralize();
+    }
     int newx=me.x,newy=me.y;
     if(res==0) newy--;
     if(res==1) newy++;
