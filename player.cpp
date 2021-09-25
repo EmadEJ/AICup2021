@@ -89,6 +89,9 @@ struct Map{
     bool isfree(int ind){
         return !(isbox(ind/width,ind%width) || iswall(ind/width,ind%width) ||  isenemy(ind/width,ind%width));
     }
+    bool isfree(int x,int y){
+        return !(isbox(x,y) || iswall(x,y) ||  isenemy(x,y));
+    }
     // is the tile in range of a bomb (regardless of the time)
     bool issafe(int x,int y){
         // returning TRUE if tile can go boom! FALSE if safe
@@ -149,7 +152,7 @@ struct Map{
         }
         return false;
     }
-    // refreshes the distances and paths after the new information
+    // refreshes the distances and paths after the new information (Using the Floyd-Warshal algorithm)
     void clean(){
         for(int i=0;i<N*N;i++) fill(dis[i],dis[i]+N*N,INF);
         for(int i=0;i<height;i++){
@@ -193,7 +196,7 @@ struct Map{
 
 // wich step will the zone hit this tile
 int safety(int x,int y){
-    return zoneStart+min(min(x+1,mp.height-x),min(y+1,mp.width-y))*zoneDelay;
+    return zoneStart+min(min(x+1,mp.height-x)-1,min(y+1,mp.width-y)-1)*zoneDelay;
 }
 
 // checking whether we should move to centre and finding the best way to do so
@@ -367,15 +370,19 @@ int mantoman(){
         return 4;
     }
     if(((me.x==enemy.x+3)&&(me.y==enemy.y)) || ((me.x==enemy.x+2)&&(me.y==enemy.y-1)) || ((me.x==enemy.x+2)&&(me.y==enemy.y+1))){
+        if(!mp.isfree(me.x-1,me.y)) return -1;
         return 2;
     }
     if(((me.x==enemy.x-3)&&(me.y==enemy.y)) || ((me.x==enemy.x-2)&&(me.y==enemy.y-1)) || ((me.x==enemy.x-2)&&(me.y==enemy.y+1))){
+        if(!mp.isfree(me.x+1,me.y)) return -1;
         return 3;
     }
     if(((me.x==enemy.x)&&(me.y==enemy.y+3)) || ((me.x==enemy.x-1)&&(me.y==enemy.y+2)) || ((me.x==enemy.x+1)&&(me.y==enemy.y+2))){
+        if(!mp.isfree(me.x,me.y-1)) return -1;
         return 0;
     }
     if(((me.x==enemy.x)&&(me.y==enemy.y-3)) || ((me.x==enemy.x-1)&&(me.y==enemy.y-2)) || ((me.x==enemy.x+1)&&(me.y==enemy.y-2))){
+        if(!mp.isfree(me.x,me.y+1)) return -1;
         return 1;
     }
     return -1;
@@ -477,7 +484,8 @@ int mine(){
     if(chosen==make_pair(-1,-1)){
         chosen=bestbomb();
         if(chosen==make_pair(-1,-1)){
-            if(explore()!=-1) return explore();
+            if(explore2()!=-1) return explore2();
+            else if(explore()!=-1) return explore();
             else return centralize();
         } 
     } 
@@ -487,12 +495,42 @@ int mine(){
     return mp.nextmove(me.x,me.y,chosen.F,chosen.S);
 }
 
+bool U,D,R,L;
 // evaluating the phase we are in and what functions to use (this should be completed last)
 int evaluate(){
     if(enemySeen && knife()!=-1) return knife();
-    if(step>zoneStart-20 && enemySeen && me.trapCount>0 && mantoman()!=-1) return mantoman();
-    if(step<zoneStart-max(mp.height,mp.width)) return mine();
-    else return centralize();
+    // to place bomb at the end of the game
+    if(centralize()==4 && mp.iszone(me.x,me.y) && me.hp<3) return 5;
+    // to place traps if left at the end
+    if(me.trapCount>0 && centralize()==4 && step>safety(me.x,me.y)-zoneDelay){
+        if(!U && mp.isfree(me.x-1,me.y)){
+            U=1;
+            return 8;
+        }
+        if(!D && mp.isfree(me.x+1,me.y)){
+            D=1;
+            return 9;
+        }
+        if(!L && mp.isfree(me.x,me.y-1)){
+            L=1;
+            return 6;
+        }
+        if(!R && mp.isfree(me.x,me.y+1)){
+            R=1;
+            return 7;
+        }
+    }
+    int res;
+    if(step>zoneStart-20 && enemySeen && me.trapCount>0 && mp.distance(me.x,me.y,enemy.x,enemy.y)<5 && mantoman()!=-1) res=mantoman();
+    if(step<zoneStart-max(mp.height,mp.width)) res=mine();
+    else res=centralize();
+    int newx=me.x,newy=me.y;
+    if(res==0) newy--;
+    if(res==1) newy++;
+    if(res==2) newx--;
+    if(res==3) newx++;
+    if(mp.bombcheck(newx,newy)) res=escape();
+    return res;
 }
 
 int main(){
@@ -518,14 +556,7 @@ int main(){
         mp.clean();
         string eom;
         cin>>eom;
-        int res=evaluate();
-        int newx=me.x,newy=me.y;
-        if(res==0) newx--;
-        if(res==1) newx++;
-        if(res==2) newy--;
-        if(res==3) newy++;
-        if(mp.bombcheck(newx,newy)) res=escape();
-        cout<<res<<endl;
+        cout<<evaluate()<<endl;
     }
     return 0;
 }
