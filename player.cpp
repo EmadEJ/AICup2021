@@ -74,7 +74,7 @@ struct Map{
     }
     bool isenemy(int x,int y){
         return (enemy.x==x && enemy.y==y);
-    }
+    }    
     bool isdark(int x,int y){
         return (stt[x][y]>>9)%2;
     }
@@ -186,13 +186,12 @@ struct Map{
         int ind1=x1*width+y1,ind2=x2*width+y2;
         return nxt[ind1][ind2];
     }
-
-    pair <int,int> center (){
+    pair <int,int> center(){
 		return {height/2 , width/2};
 	}
 } mp;
 
-// which step will the zone hit this tile
+// wich step will the zone hit this tile
 int safety(int x,int y){
     return zoneStart+min(min(x+1,mp.height-x),min(y+1,mp.width-y))*zoneDelay;
 }
@@ -214,7 +213,6 @@ int centralize(){
     }
     return mp.nextmove(me.x,me.y,best.first,best.second);
 }
-
 
 // exploring the map when you see no box to destroy
 
@@ -325,7 +323,7 @@ int explore2(){
             }
         }
     }
-    if (best == make_pair (-1,-1)) return 4;
+    if (best == make_pair (-1,-1)) return -1;
     return mp.nextmove(me.x,me.y,best.F,best.S);
 }
 
@@ -345,7 +343,6 @@ int explore(){
     return mp.nextmove(me.x,me.y,best.F,best.S);
 }
 
-
 // when we're side by side with enemy returns the right move (part of mantoman process)
 int knife(){
     if(me.trapCount>0){
@@ -361,7 +358,7 @@ int knife(){
 // handling when we meet enemy in the middle
 int mantoman(){
     if(!enemySeen) return -1;
-    if(safety(me.x,me.y)<=safety(enemy.x,enemy.y)) return -1;
+    if(safety(me.x,me.y)<safety(enemy.x,enemy.y)) return -1;
     if(knife()!=-1) return knife();
     if(((me.x==enemy.x-1)&&(me.y==enemy.y-1)) || ((me.x==enemy.x+1)&&(me.y==enemy.y-1)) || ((me.x==enemy.x-1)&&(me.y==enemy.y+1)) || ((me.x==enemy.x+1)&&(me.y==enemy.y+1))){
         return 4;
@@ -382,11 +379,6 @@ int mantoman(){
         return 1;
     }
     return -1;
-}
-
-// escaping from enemy in dire situations
-int runaway(){
-
 }
 
 // finding the best bomb to place to collect the most boxes (part of mining process)
@@ -477,15 +469,18 @@ int mine(){
         if(mp.ishp(tile.F,tile.S) || mp.istrap(tile.F,tile.S) || mp.isbombupgrade(tile.F,tile.S)){
             chosen={-1,-1};
             return collect();
-        }
+        } 
     }
     if(!mp.issafe(me.x,me.y)){
         return escape();
-    }
+    } 
     if(chosen==make_pair(-1,-1)){
         chosen=bestbomb();
-        if(chosen==make_pair(-1,-1)) return explore();
-    }
+        if(chosen==make_pair(-1,-1)){
+            if(explore()!=-1) return explore();
+            else return centralize();
+        } 
+    } 
     if(me.x==chosen.F && me.y==chosen.S){
         return 5;
     }
@@ -509,6 +504,7 @@ int main(){
         cin>>step>>lastmove>>me.x>>me.y>>me.hp>>me.hpupcnt>>me.bombRange>>me.trapCount;
         cin>>enemySeen;
         if(enemySeen) cin>>enemy.x>>enemy.y>>enemy.hp;
+        else enemy.x=-1,enemy.y=-1,enemy.hp=-1;
         int n;
         cin>>n;
         sight.clear();
