@@ -217,101 +217,22 @@ int centralize(){
     return mp.nextmove(me.x,me.y,best.first,best.second);
 }
 
-// exploring the map when you see no box to destroy
-
-// the (x,y) vector direction towards center
-pair <int,int> centerdir(){
-	pii center = mp.center();
-	int xdir, ydir;
-	if(me.x < center.F){
-	    ydir = 3;
-	} else {
-		ydir = 2;
-	}
-	if (me.y < center.S){
-		xdir = 1;
-	} else{
-		xdir = 0;
-	}
-	return {xdir,ydir};
-}
-
-// the (x,y) vector direction away from center
-pair <int,int> centerdirnegative(){
-	pii center = mp.center();
-	int xdir, ydir;
-	if(me.x < center.F){
-	    ydir = 2;
-	} else {
-		ydir = 3;
-	}
-	if (me.y < center.S){
-		xdir = 0;
-	} else{
-		xdir = 1;
-	}
-	return {xdir,ydir};
-}
-
-int dirlen = 2;
-int dirstep = 0;
-int dir = -1;
-
-//another version of explore. this one uses a weighted random selection to pick a direction to follow for the next couple of moves (dirlen)
-int explore1(){
-	//random initialization
-    srand(unsigned(time(0)));
-
-	pii best;
-	int bestdis = INF;
-    pii cdir = centerdir();
-    pii cdirneg = centerdirnegative();
-
-	if (dir == -1 || !(dirstep > 0)) {
-		vector<int> rnd;
-		int x = me.x;
-		int y = me.y;
-		for(int i = 0; i < mp.height + mp.width ; i ++){
-			if(i < min(x,mp.height - x) * 2) {
-			rnd.push_back(cdirneg.F);
-			} else if (i < mp.height){
-			rnd.push_back(cdir.F);
-			} else if(i < min(y,mp.width - y) * 2 + mp.height){
-			rnd.push_back(cdirneg.S);
-			} else {
-			rnd.push_back(cdirneg.S);
-			}
-		}
-
-		random_shuffle(rnd.begin(), rnd.end());
-		dir = rnd[0];
-		dirstep = dirlen;
-	}
-
-	for (pii tile:sight){
-		int x = tile.F;
-		int y = tile.S;
-		int dis = mp.distance(me.x,me.y,x,y);
-
-		if(dir == 0) {
-			if(y >= me.y) continue;
-			if(dis < bestdis) best = tile;
-		} else if (dir == 1){
-			if(y <= me.y) continue;
-			if(dis < bestdis) best = tile;
-		} else if (dir == 2){
-			if(x >= me.x) continue;
-			if(dis < bestdis) best = tile;
-		} else if (dir == 3) {
-			if(x >= me.x) continue;
-			if(dis < bestdis) best = tile;
-		} else {
-			return -1;
-		}
-	}
-
-	dirstep --;
-	return mp.nextmove(me.x,me.y,best.F,best.S);
+// outputs distance to centre
+int distcentre(){
+    int dis=INF,safe=0;
+    pair <int,int> best;
+    for(int i=0;i<mp.height;i++){
+        for(int j=0;j<mp.width;j++){
+            if(!mp.isdark(i,j)){
+                if((safety(i,j)>safe && mp.distance(me.x,me.y,i,j)!=INF) || (safety(i,j)==safe && mp.distance(me.x,me.y,i,j)<dis)){
+                    dis=mp.distance(me.x,me.y,i,j);
+                    best={i,j};
+                    safe=safety(i,j);
+                }
+            }
+        }
+    }
+    return dis;
 }
 
 //yet another version of explore. in this one, the character checks to see if there is any other box remaining in the map that we know of. (which there probably is, since the map is mirrored around a point)
@@ -492,7 +413,6 @@ int mine(){
     if(me.x==chosen.F && me.y==chosen.S){
         return 5;
     }
-    cerr<<chosen.F<<" "<<chosen.S<<endl;
     return mp.nextmove(me.x,me.y,chosen.F,chosen.S);
 }
 
@@ -503,7 +423,7 @@ int evaluate(){
     // to place bomb at the end of the game
     if(centralize()==4 && mp.iszone(me.x,me.y) && me.hp<3) return 5;
     // to place traps if left at the end
-    if(me.trapCount>0 && centralize()==4 && step>safety(me.x,me.y)-zoneDelay){
+    if(me.trapCount>0 && centralize()==4 && step>safety(me.x,me.y)-2*zoneDelay){
         if(!U && mp.isfree(me.x-1,me.y)){
             U=1;
             return 8;
@@ -525,7 +445,7 @@ int evaluate(){
     if(step>zoneStart-20 && enemySeen && me.trapCount>0 && mp.distance(me.x,me.y,enemy.x,enemy.y)<5 && mantoman()!=-1) res=mantoman();
     if(step<zoneStart-max(mp.height,mp.width)-6) res=mine();
     else if(centralize()!=4){
-        if((step%(bombDelay+2))<2) return 5;
+        if(distcentre()>me.bombRange && me.bombRange*2<=bombDelay && (step%(bombDelay+2))<2) return 5;
         else return centralize();
     }
     else res=centralize();
