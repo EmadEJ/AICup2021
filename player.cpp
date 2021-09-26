@@ -1,3 +1,4 @@
+// AICup 2021 -> ostad netetoon kharabe = (Emad EJ,Emad MZ,Mohammad Parsa MB)
 #include <bits/stdc++.h>
 
 #define F first
@@ -74,7 +75,8 @@ struct Map{
     }
     bool isenemy(int x,int y){
         return (enemy.x==x && enemy.y==y);
-    }    
+    }
+	// has been in sight
     bool isdark(int x,int y){
         return (stt[x][y]>>9)%2;
     }
@@ -194,12 +196,12 @@ struct Map{
 	}
 } mp;
 
-// wich step will the zone hit this tile
+// which step will the zone hit this tile
 int safety(int x,int y){
     return zoneStart+min(min(x+1,mp.height-x)-1,min(y+1,mp.width-y)-1)*zoneDelay;
 }
 
-// checking whether we should move to centre and finding the best way to do so
+// finding the best way to centre
 int centralize(){
     int dis=INF,safe=0;
     pair <int,int> best;
@@ -235,23 +237,7 @@ int distcentre(){
     return dis;
 }
 
-//yet another version of explore. in this one, the character checks to see if there is any other box remaining in the map that we know of. (which there probably is, since the map is mirrored around a point)
-int explore2(){
-    int dis=INF;
-    pii best={-1,-1};
-    for(int i=0;i<mp.height;i++){
-        for(int j=0;j<mp.width;j++){
-            if(mp.isbox(i,j) && mp.distance(me.x,me.y,i,j)<dis){
-                best={i,j};
-                dis=mp.distance(me.x,me.y,i,j);
-            }
-        }
-    }
-    if (best == make_pair (-1,-1)) return -1;
-    return mp.nextmove(me.x,me.y,best.F,best.S);
-}
-
-// exploring the map when you see no box to destroy
+// exploring the map when you see no box to destroy by chasing the dark spots on the map
 int explore(){
     int dis=INF;
     pii best={-1,-1};
@@ -264,6 +250,22 @@ int explore(){
         }
     }
     if(best.F==-1) return -1;
+    return mp.nextmove(me.x,me.y,best.F,best.S);
+}
+
+// yet another version of explore. in this one, the character checks to see if there is any other box remaining in the map that we know of. (which there probably is, since the map is mirrored around a point)
+int explore2(){
+    int dis=INF;
+    pii best={-1,-1};
+    for(int i=0;i<mp.height;i++){
+        for(int j=0;j<mp.width;j++){
+            if(mp.isbox(i,j) && mp.distance(me.x,me.y,i,j)<dis){
+                best={i,j};
+                dis=mp.distance(me.x,me.y,i,j);
+            }
+        }
+    }
+    if (best == make_pair (-1,-1)) return -1;
     return mp.nextmove(me.x,me.y,best.F,best.S);
 }
 
@@ -309,7 +311,7 @@ int mantoman(){
     return -1;
 }
 
-// finding the best bomb to place to collect the most boxes (part of mining process)
+// finding the nearest best bomb to place to collect the most boxes (part of mining process)
 pair <int,int> bestbomb(){
     int num=1,len=INF;
     pair <int,int> best={-1,-1};
@@ -355,7 +357,7 @@ pair <int,int> bestbomb(){
     return best;
 }
 
-// escaping from the bomb we just placed (part of the mining process)
+// escaping from bombs (part of the mining process)
 int escape(){
     int dis=INF;
     pii best;
